@@ -1,0 +1,18 @@
+var generateSeries = function(prevGames, numAWins) {
+  if (numAWins == 4) {
+    return prevGames.length
+  } else {
+    var record_ratio = 135/(121+135)
+    var game = flip(record_ratio) ? 'A' : 'B'
+    return generateSeries(prevGames.concat(game), (game == 'A')? numAWins+1 : numAWins)
+  }
+}
+
+var numSimulations = 50
+var gameSimulation = map(function(prevGames, numAWins){return generateSeries([], 0)}, _.range(numSimulations))
+print('Number of games it takes for A to win 4 games: ' + gameSimulation)
+
+var wins = filter(function(i){return i <= 7;}, gameSimulation)
+
+print("Probability that A will win World Series (based on " + numSimulations + " simulations): " + wins.length / numSimulations)
+viz(wins, {xLabel: 'If Team A wins the World Series, number of games it takes', yLabel: 'Percentage of Won Series'})
