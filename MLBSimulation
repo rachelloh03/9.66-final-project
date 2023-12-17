@@ -1,18 +1,41 @@
-var generateSeries = function(prevGames, numAWins) {
+var generateSeries = function(prevGames, recordRatio, numAWins) {
   if (numAWins == 4) {
     return prevGames.length
   } else {
-    var record_ratio = 135/(121+135)
-    var game = flip(record_ratio) ? 'A' : 'B'
-    return generateSeries(prevGames.concat(game), (game == 'A')? numAWins+1 : numAWins)
+    var game = flip(recordRatio) ? 'A' : 'B'
+    return generateSeries(prevGames.concat(game), recordRatio, (game == 'A')? numAWins+1 : numAWins)
   }
 }
 
+var runSimulations = function(ratio, numTrials) {
+  var sim = map(function(prevGames, recordRatio, numAWins){return generateSeries([], ratio, 0)}, _.range(numTrials))
+  return sim
+}
+
+var ratio = 135/(121+135)
 var numSimulations = 50
-var gameSimulation = map(function(prevGames, numAWins){return generateSeries([], 0)}, _.range(numSimulations))
-print('Number of games it takes for A to win 4 games: ' + gameSimulation)
+print(numSimulations + ' simulations')
 
-var wins = filter(function(i){return i <= 7;}, gameSimulation)
+var results = runSimulations(ratio, numSimulations)
+var wins = filter(function(i){return i <= 7}, results)
 
-print("Probability that A will win World Series (based on " + numSimulations + " simulations): " + wins.length / numSimulations)
-viz(wins, {xLabel: 'If Team A wins the World Series, number of games it takes', yLabel: 'Percentage of Won Series'})
+print('Number of games it takes for A to win 4 games: ' + results)
+print("Probability that A will win World Series: " + wins.length / numSimulations)
+viz(wins, {xLabel: 'World Series Length', yLabel: 'Likelihood'})
+
+
+// test a range of ratio values between 0 and 1 to see what the model predicts
+var ratios = mapN(function(x) { return (x + 1)/100 }, 100);
+
+var compareRatios = function(i, results) {
+  if (i == 100) {
+    return results
+  } else {
+    var sim = runSimulations(ratios[i], numSimulations)
+    var wins = filter(function(i){return i <= 7}, sim)
+    return compareRatios(i + 1, results.concat(wins.length / numSimulations))
+  }
+}
+
+var testDiffRatios = compareRatios(0, [])
+viz.scatter(ratios, testDiffRatios, {xLabel: 'Ratio of Records (Team A: B)', yLabel: 'Probability of Team A winning WS'})
